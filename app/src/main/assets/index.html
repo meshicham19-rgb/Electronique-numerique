@@ -1,0 +1,714 @@
+<title>Électronique numérique 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout : établi de labo — scène 3D de la maquette à gauche, fiche de manip à droite (empilées sur téléphone) */
+:root{
+  --bg:#e9eee9; --panel:#f7f9f6; --ink:#1b2420; --muted:#56635b; --line:#c9d3cb;
+  --accent:#0d6b5f; --accent-ink:#ffffff; --hi:#d9273f; --hi-soft:#fde4e8; --row:#e3f1ec;
+  --stage:#dfe6e0;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111614; --panel:#18201d; --ink:#e3ebe6; --muted:#9aa9a1; --line:#2c3833;
+  --accent:#3cc7b2; --accent-ink:#0b1412; --hi:#ff5a72; --hi-soft:#3a1b22; --row:#1f3530;
+  --stage:#1b2421; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111614; --panel:#18201d; --ink:#e3ebe6; --muted:#9aa9a1; --line:#2c3833;
+  --accent:#3cc7b2; --accent-ink:#0b1412; --hi:#ff5a72; --hi-soft:#3a1b22; --row:#1f3530;
+  --stage:#1b2421; color-scheme:dark}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 28px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,4.4vw,42px);line-height:1;margin:4px 0 0;text-wrap:balance}
+h1 span{color:var(--accent)}
+.author{display:inline-block;margin-top:10px;font-family:var(--f-display);font-weight:700;font-size:clamp(20px,2.6vw,26px);letter-spacing:.03em;color:var(--accent);border-top:2px solid var(--accent);padding-top:4px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.navs{display:flex;flex-direction:column;gap:8px;align-items:flex-end;min-width:0}
+@media (max-width:860px){.navs{align-items:flex-start}}
+.tps{display:flex;gap:0;border:1px solid var(--accent);border-radius:7px;overflow:hidden}
+.tp{font-family:var(--f-display);font-size:18px;font-weight:700;letter-spacing:.04em;padding:6px 18px;border:0;background:var(--panel);color:var(--accent);cursor:pointer}
+.tp+.tp{border-left:1px solid var(--accent)}
+.tp[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.tab{font-family:var(--f-display);font-size:17px;font-weight:600;letter-spacing:.02em;padding:7px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tab:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:860px){main{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:10px;overflow:hidden;aspect-ratio:4/3;max-width:100%;min-height:300px}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.hint{position:absolute;left:10px;bottom:8px;font-family:var(--f-mono);font-size:11px;color:var(--muted);background:var(--panel);padding:3px 8px;border-radius:4px;border:1px solid var(--line)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel h2{font-family:var(--f-display);font-size:26px;font-weight:700;margin:0;line-height:1.05}
+.chipref{font-family:var(--f-mono);font-size:12px;color:var(--accent)}
+.panel p{margin:0;color:var(--muted);max-width:62ch}
+.ctrls{display:flex;flex-wrap:wrap;gap:6px}
+.ctrls button{font-family:var(--f-mono);font-size:13px;padding:6px 10px;border-radius:5px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;min-width:58px}
+.ctrls button.on{background:var(--hi);border-color:var(--hi);color:#fff}
+.ctrls button.act{border-color:var(--accent);color:var(--accent);font-weight:600}
+.ctrls button.act.run{background:var(--accent);color:var(--accent-ink)}
+.lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:-6px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:center}
+th{color:var(--muted);font-weight:600}
+td:last-child{text-align:left;font-family:var(--f-body)}
+tr.cur td{background:var(--row);font-weight:600}
+tr.cur td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.chrono{width:100%;height:150px;display:block}
+.note{font-size:13.5px;border-left:3px solid var(--hi);padding:4px 0 4px 10px;color:var(--ink)}
+.state{font-family:var(--f-mono);font-size:13px;display:flex;flex-wrap:wrap;gap:6px}
+.state b{display:inline-block;padding:2px 8px;border-radius:4px;background:var(--bg);border:1px solid var(--line)}
+.state b.h{background:var(--hi);border-color:var(--hi);color:#fff}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Module d'Électronique numérique · Travaux pratiques</div>
+      <h1 id="tpTitle">Les circuits logiques séquentiels</h1>
+      <div class="author">Pr. Hicham MESBAH</div>
+    </div>
+    <div class="navs"><nav class="tps" id="tps" aria-label="Choix du TP"></nav><nav class="tabs" role="tablist" id="tabs"></nav></div>
+  </header>
+  <main>
+    <div class="stage" id="stage"><div class="hint">Glisser : tourner · molette / pincer : zoom · cliquer un interrupteur</div></div>
+    <section class="panel" id="panel">
+      <div><h2 id="ttl"></h2><div class="chipref" id="ref"></div></div>
+      <p id="desc"></p>
+      <div class="lbl">Commandes</div>
+      <div class="ctrls" id="ctrls"></div>
+      <div class="state" id="state"></div>
+      <div class="lbl">Table de vérité</div>
+      <div class="tbl"><table id="tbl"></table></div>
+      <div class="lbl">Chronogramme (enregistré en direct)</div>
+      <canvas class="chrono" id="chrono"></canvas>
+      <div class="note" id="note"></div>
+    </section>
+  </main>
+</div>
+
+<script src="three.min.js"></script>
+<script src="OrbitControls.js"></script>
+<script>
+(function(){
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+stage.prepend(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(38,4/3,0.1,200);
+camera.position.set(0,13,11);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.maxPolarAngle=Math.PI*0.47; controls.minDistance=6; controls.maxDistance=34;
+scene.add(new THREE.HemisphereLight(0xffffff,0x667766,0.75));
+const sun=new THREE.DirectionalLight(0xffffff,0.75); sun.position.set(6,14,8); scene.add(sun);
+function setBg(){scene.background=new THREE.Color(css('--stage')||'#dfe6e0')}
+setBg(); matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{setBg();drawChrono()});
+new MutationObserver(()=>{setBg();drawChrono()}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+/* ---------- helpers 3D ---------- */
+let group=new THREE.Group(); scene.add(group); let clickables=[];
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');draw(g,w,h);const t=new THREE.CanvasTexture(c);t.anisotropy=4;return t}
+function board(W,D){
+  const tex=canvasTex(1400,Math.round(1400*D/W),(g,w,h)=>{
+    g.fillStyle='#f3f1ea';g.fillRect(0,0,w,h);
+    const rail=(y,col)=>{g.strokeStyle=col;g.lineWidth=4;g.beginPath();g.moveTo(30,y);g.lineTo(w-30,y);g.stroke()};
+    rail(28,'#d33');rail(70,'#36c');rail(h-70,'#d33');rail(h-28,'#36c');
+    g.fillStyle='#9a978d';
+    for(let x=40;x<w-30;x+=22){for(const y of[42,56,h-56,h-42])g.fillRect(x,y,7,7);
+      for(let y=110;y<h-110;y+=22){if(Math.abs(y-h/2)<20)continue;g.fillRect(x,y,7,7)}}
+    g.fillStyle='#d9d5c8';g.fillRect(30,h/2-9,w-60,18);
+    g.font='bold 22px IBM Plex Mono, monospace';g.fillStyle='#d33';g.fillText('+5 V',w-110,22);g.fillStyle='#36c';g.fillText('GND',w-100,96);
+  });
+  const m=new THREE.Mesh(new THREE.BoxGeometry(W,0.4,D),[0,0,new THREE.MeshStandardMaterial({map:tex,roughness:.9}),0,0,0].map(x=>x||new THREE.MeshStandardMaterial({color:0xe2ded2,roughness:.9})));
+  m.position.y=-0.2; group.add(m);
+  return {railP:-D/2+0.33, railN:-D/2+0.6, railP2:D/2-0.6, railN2:D/2-0.33};
+}
+function label(text,x,y,z,size=0.42,color='#1b2420',bg='rgba(255,255,255,0.85)'){
+  const c=document.createElement('canvas');const g=c.getContext('2d');
+  const f=64;g.font=`600 ${f}px IBM Plex Mono, monospace`;const tw=g.measureText(text).width;
+  c.width=tw+40;c.height=f+30;g.font=`600 ${f}px IBM Plex Mono, monospace`;
+  g.fillStyle=bg;g.beginPath();g.roundRect?g.roundRect(0,0,c.width,c.height,16):g.rect(0,0,c.width,c.height);g.fill();
+  g.fillStyle=color;g.textBaseline='middle';g.fillText(text,20,c.height/2+2);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));
+  s.scale.set(size*c.width/c.height,size,1);s.position.set(x,y,z);s.renderOrder=5;group.add(s);
+  s.userData.set=(t)=>{group.remove(s);const n=label(t,x,y,z,size,color,bg);return n};
+  return s;
+}
+function chip(name,n,x,z,names){
+  const half=n/2, sp=0.5, L=half*sp+0.3, Dd=1.3;
+  const tex=canvasTex(1024,Math.round(1024*Dd/L),(g,w,h)=>{
+    g.fillStyle='#232323';g.fillRect(0,0,w,h);
+    g.fillStyle='#3a3a3a';g.beginPath();g.arc(0,h/2,h*0.13,-Math.PI/2,Math.PI/2);g.fill();
+    g.fillStyle='#eee';g.font=`bold ${h*0.24}px IBM Plex Mono, monospace`;g.textAlign='center';g.textBaseline='middle';g.fillText(name,w/2,h/2);
+    g.font=`${h*0.105}px IBM Plex Mono, monospace`;
+    for(let i=0;i<half;i++){const px=(0.15+i*sp+sp/2)/L*w;
+      g.fillStyle='#bbb';g.fillText(String(i+1),px,h*0.86);g.fillText(String(n-i),px,h*0.14);
+      g.fillStyle='#ffd27a';g.fillText(names[i]||'',px,h*0.71);g.fillText(names[n-1-i]||'',px,h*0.29);}
+  });
+  const mats=[0,0,new THREE.MeshStandardMaterial({map:tex,roughness:.6}),0,0,0].map(m=>m||new THREE.MeshStandardMaterial({color:0x202020,roughness:.6}));
+  const body=new THREE.Mesh(new THREE.BoxGeometry(L,0.38,Dd),mats);body.position.set(x,0.28,z);group.add(body);
+  const pm=new THREE.MeshStandardMaterial({color:0xb8bcc2,metalness:.8,roughness:.3});
+  const P={};
+  for(let i=0;i<half;i++){const px=x-L/2+0.15+i*sp+sp/2;
+    for(const [k,zz] of [[i+1,z+Dd/2+0.08],[n-i,z-Dd/2-0.08]]){
+      const pin=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.3,0.16),pm);pin.position.set(px,0.12,zz);group.add(pin);
+      P[k]=new THREE.Vector3(px,0.05,zz+(k<=half?0.12:-0.12));}}
+  return P;
+}
+const WC={red:0xd32f2f,blue:0x2f5fd3,green:0x1e9a46,yellow:0xe0b000,orange:0xe07a1f,purple:0x8e44ad,white:0xdddddd,grey:0x666666};
+function wire(a,b,col='green',h=0.6){
+  const A=a.clone(),B=b.clone();const m1=A.clone();m1.y+=h;const m2=B.clone();m2.y+=h;
+  const curve=new THREE.CatmullRomCurve3([A,m1,m1.clone().lerp(m2,0.5).setY(h+0.15),m2,B]);
+  const mesh=new THREE.Mesh(new THREE.TubeGeometry(curve,40,0.045,6,false),new THREE.MeshStandardMaterial({color:WC[col]||col,roughness:.5}));
+  group.add(mesh);return mesh;
+}
+const V=(x,z,y=0.05)=>new THREE.Vector3(x,y,z);
+function toggleSwitch(x,z,name,get,set){
+  const base=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.3,1.0),new THREE.MeshStandardMaterial({color:0x2b3a8f}));
+  base.position.set(x,0.15,z);group.add(base);
+  const knob=new THREE.Mesh(new THREE.BoxGeometry(0.36,0.28,0.38),new THREE.MeshStandardMaterial({color:0xeeeeee}));
+  group.add(knob);
+  let lab=label('',x,1.0,z,0.4);
+  const o={pos:V(x,z+0.5),refresh(){const v=get();knob.position.set(x,0.38,z+(v?-0.22:0.22));knob.material.color.set(v?0xff4a63:0xeeeeee);
+    lab=lab.userData.set(`${name}=${v}`)}};
+  [base,knob].forEach(m=>{m.userData.click=()=>{set(1-get());};clickables.push(m)});
+  o.refresh();return o;
+}
+function pushButton(x,z,name,act,col=0x0d6b5f){
+  const b=new THREE.Mesh(new THREE.CylinderGeometry(0.32,0.38,0.35,24),new THREE.MeshStandardMaterial({color:col}));
+  b.position.set(x,0.2,z);group.add(b);b.userData.click=act;clickables.push(b);
+  label(name,x,0.95,z,0.36);return {pos:V(x,z+0.4),mesh:b};
+}
+function led(x,z,name,color=0xff2a3c){
+  const mOff=new THREE.MeshStandardMaterial({color:new THREE.Color(color).multiplyScalar(0.35),roughness:.3,transparent:true,opacity:.9});
+  const dome=new THREE.Mesh(new THREE.SphereGeometry(0.22,20,14,0,Math.PI*2,0,Math.PI/2),mOff);
+  const cyl=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,0.3,20),mOff);
+  cyl.position.set(x,0.25,z);dome.position.set(x,0.4,z);group.add(cyl,dome);
+  const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
+  glow.scale.set(1.6,1.6,1);glow.position.set(x,0.45,z);group.add(glow);
+  // résistance
+  const r=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.45,10),new THREE.MeshStandardMaterial({color:0xc9a26b}));
+  r.rotation.x=Math.PI/2;r.position.set(x,0.12,z+0.55);group.add(r);
+  label(name,x,1.05,z,0.38);
+  return {pos:V(x,z+0.85),set(v){mOff.emissive=new THREE.Color(v?color:0x000000);mOff.emissiveIntensity=v?1.4:0;glow.visible=!!v}};
+}
+const glowTex=canvasTex(128,128,(g,w,h)=>{const r=g.createRadialGradient(64,64,0,64,64,64);r.addColorStop(0,'rgba(255,255,255,.9)');r.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=r;g.fillRect(0,0,w,h)});
+function sevenSeg(x,z){
+  const base=new THREE.Mesh(new THREE.BoxGeometry(1.7,0.3,2.4),new THREE.MeshStandardMaterial({color:0x151515}));
+  base.position.set(x,0.2,z);group.add(base);
+  const S={},w=0.75,t=0.13;
+  const defs={a:[0,-0.85,1],b:[0.42,-0.43,0],c:[0.42,0.43,0],d:[0,0.85,1],e:[-0.42,0.43,0],f:[-0.42,-0.43,0],g:[0,0,1]};
+  for(const k in defs){const [dx,dz,hz]=defs[k];const m=new THREE.MeshStandardMaterial({color:0x3a1010});
+    const seg=new THREE.Mesh(new THREE.BoxGeometry(hz?w:t,0.06,hz?t:w),m);seg.position.set(x+dx,0.38,z+dz);group.add(seg);S[k]=m}
+  const DIG=['abcdef','bc','abdeg','abcdg','bcfg','acdfg','acdefg','abc','abcdefg','abcdfg'];
+  return {set(d){const on=typeof d==='string'?d:(DIG[d]||'');for(const k in S){S[k].color.set(on.includes(k)?0xff3030:0x3a1010);S[k].emissive=new THREE.Color(on.includes(k)?0xff1010:0);S[k].emissiveIntensity=on.includes(k)?0.9:0}},
+    pins:{a:V(x-0.6,z-1.3),b:V(x-0.3,z-1.3),c:V(x,z-1.3),d:V(x+0.3,z-1.3),e:V(x+0.6,z-1.3),f:V(x-0.45,z+1.3),g:V(x+0.45,z+1.3)}};
+}
+function clearScene(){scene.remove(group);group.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){[].concat(o.material).forEach(m=>{if(m.map&&m.map!==glowTex)m.map.dispose();m.dispose()})}});group=new THREE.Group();scene.add(group);clickables=[]}
+
+/* ---------- picking ---------- */
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();let downAt=null;
+renderer.domElement.addEventListener('pointerdown',e=>{downAt=[e.clientX,e.clientY]});
+renderer.domElement.addEventListener('pointerup',e=>{
+  if(!downAt||Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1])>6)return;
+  const r=renderer.domElement.getBoundingClientRect();
+  mouse.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(mouse,camera);const hit=ray.intersectObjects(clickables)[0];
+  if(hit&&hit.object.userData.click)hit.object.userData.click();
+});
+renderer.domElement.addEventListener('pointermove',e=>{
+  const r=renderer.domElement.getBoundingClientRect();
+  mouse.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(mouse,camera);renderer.domElement.style.cursor=ray.intersectObjects(clickables).length?'pointer':'grab';
+});
+
+/* ---------- chronogramme ---------- */
+let hist=[],sigNames=[];
+function record(snap){hist.push(snap);if(hist.length>34)hist.shift();drawChrono()}
+function drawChrono(){
+  const c=document.getElementById('chrono');const dpr=Math.min(devicePixelRatio,2);
+  c.style.height=Math.max(110,sigNames.length*30)+'px';const W=c.clientWidth,H=c.clientHeight;if(!W)return;c.width=W*dpr;c.height=H*dpr;
+  const g=c.getContext('2d');g.scale(dpr,dpr);g.clearRect(0,0,W,H);
+  const n=sigNames.length;if(!n)return;const rowH=H/n,lx=40,step=(W-lx-6)/34;
+  const cols=[css('--muted'),css('--accent'),css('--hi'),'#4a78d0','#c98a1a','#8e44ad','#2e9a5a'];
+  g.font='600 12px IBM Plex Mono, monospace';g.textBaseline='middle';
+  sigNames.forEach((s,i)=>{const y0=i*rowH+rowH*0.8,amp=rowH*0.55;
+    g.fillStyle=css('--ink');g.fillText(s,4,y0-amp/2);
+    g.strokeStyle=css('--line');g.lineWidth=1;g.beginPath();g.moveTo(lx,y0);g.lineTo(W,y0);g.stroke();
+    g.strokeStyle=cols[i%cols.length];g.lineWidth=2;g.beginPath();
+    hist.forEach((h,k)=>{const v=h[s]?1:0,x=lx+k*step,y=y0-v*amp;
+      if(k===0)g.moveTo(x,y);else{const pv=hist[k-1][s]?1:0;g.lineTo(x,y0-pv*amp);g.lineTo(x,y)}g.lineTo(x+step,y)});
+    g.stroke();});
+}
+
+/* ---------- panneau ---------- */
+const $=id=>document.getElementById(id);
+let cur=null,timer=null;
+function renderPanel(){
+  const E=cur;$('ctrls').innerHTML='';
+  E.controls().forEach(b=>{const el=document.createElement('button');el.textContent=b.label;el.id='c-'+b.id;
+    if(b.type==='act')el.className='act'+(b.run?' run':'');else if(b.on)el.className='on';
+    el.onclick=b.fn;$('ctrls').appendChild(el)});
+  const t=E.table();let h='<thead><tr>'+t.head.map(x=>`<th>${x}</th>`).join('')+'</tr></thead><tbody>';
+  t.rows.forEach((r,i)=>{h+=`<tr class="${i===t.cur?'cur':''}">`+r.map(x=>`<td>${x}</td>`).join('')+'</tr>'});
+  $('tbl').innerHTML=h+'</tbody>';
+  $('state').innerHTML=E.state().map(([k,v])=>`<b class="${v===1?'h':''}">${k} = ${v}</b>`).join('');
+}
+function refresh(){cur.sync();renderPanel()}
+function setAuto(on,period){clearInterval(timer);timer=null;if(on)timer=setInterval(()=>cur.tick(),period)}
+
+/* ================= EXPÉRIENCES ================= */
+const EXP={};
+
+/* --- 1. Bascule RS : 7402 (brochage du polycopié) --- */
+EXP.rs={tab:'RS (7402)',title:'Bascule RS à portes NOR',ref:'CI 7402 · brochage du polycopié',
+ desc:'Deux NOR croisées : NOR1 (1A = R, 1B = Q̄, sortie 1Y = Q) et NOR2 (2A = Q, 2B = S, sortie 2Y = Q̄). Bascule les interrupteurs S et R et observe les LED.',
+ note:'S = R = 1 éteint les deux LED (Q = Q̄ = 0) : c\'est l\'état interdit. Si on repasse ensuite directement à 00, l\'état final est imprévisible.',
+ st:{S:0,R:0,Q:0,Qb:1},sigs:['S','R','Q','Q̄'],
+ build(){const s=this.st;const b=board(16,10);
+  const P=chip('7402',14,0,-0.6,['1A','1B','1Y','2A','2B','2Y','GND','3Y','3A','3B','4Y','4A','4B','Vcc']);
+  wire(P[14],V(P[14].x,b.railP),'red',0.4);wire(P[7],V(P[7].x,b.railN2),'blue',0.4);
+  this.sw={S:toggleSwitch(-5,2.4,'S',()=>s.S,v=>{s.S=v;this.eval()}),R:toggleSwitch(-6.4,2.4,'R',()=>s.R,v=>{s.R=v;this.eval()})};
+  for(const k of['S','R'])wire(this.sw[k].pos,V(this.sw[k].pos.x,3.3),'white',0.2);
+  wire(V(-6.4,3.3),P[1],'orange',0.9);wire(V(-5,3.3),P[5],'orange',1.3);
+  wire(P[3],P[4],'green',0.45);wire(P[6],P[2],'purple',0.75);
+  this.L={Q:led(4.2,2.2,'Q'),Qb:led(5.6,2.2,'Q̄',0xff9a1a)};
+  wire(P[3],V(4.2,2.0),'green',1.6);wire(P[6],V(5.6,2.0),'purple',1.1);
+  wire(this.L.Q.pos,V(4.2,b.railN2),'blue',0.2);wire(this.L.Qb.pos,V(5.6,b.railN2),'blue',0.2);
+  label('NOR1 : 1A,1B → 1Y = Q    NOR2 : 2A,2B → 2Y = Q̄',0,1.25,-2.6,0.34);
+  camera.position.set(0,12.5,10.5);controls.target.set(0,0,0.2);},
+ eval(){const s=this.st;const was11=s.Q===0&&s.Qb===0;
+  if(s.S&&s.R){s.Q=0;s.Qb=0}else if(s.S){s.Q=1;s.Qb=0}else if(s.R){s.Q=0;s.Qb=1}
+  else if(was11){s.Q=Math.random()<.5?1:0;s.Qb=1-s.Q}
+  record({S:s.S,R:s.R,Q:s.Q,'Q̄':s.Qb});refresh()},
+ sync(){const s=this.st;this.sw.S.refresh();this.sw.R.refresh();this.L.Q.set(s.Q);this.L.Qb.set(s.Qb)},
+ controls(){const s=this.st;return[{id:'S',label:`S = ${s.S}`,on:s.S,fn:()=>{s.S^=1;this.eval()}},{id:'R',label:`R = ${s.R}`,on:s.R,fn:()=>{s.R^=1;this.eval()}}]},
+ state(){const s=this.st;return[['Q',s.Q],['Q̄',s.Qb]]},
+ table(){const s=this.st;return{head:['S','R','Q','Q̄','État'],rows:[['0','0','Q','Q̄','Mémoire'],['0','1','0','1','Mise à 0'],['1','0','1','0','Mise à 1'],['1','1','0','0','Interdit']],cur:s.S*2+s.R}}};
+
+/* --- 1b. Bascule RSH : 7408 + 7402 --- */
+const N7408=['1A','1B','1Y','2A','2B','2Y','GND','3Y','3A','3B','4Y','4A','4B','Vcc'];
+const N7402=['1A','1B','1Y','2A','2B','2Y','GND','3Y','3A','3B','4Y','4A','4B','Vcc'];
+const TP_EVENTS=(()=>{const ev=[];
+  [145,233,323,413,502,592].forEach(t=>ev.push([t,'S']));
+  [97,123,187,213,277,302,367,392,457,482,547,572,617].forEach(t=>ev.push([t,'R']));
+  [240,418,601].forEach(t=>ev.push([t,'H']));return ev.sort((a,b)=>a[0]-b[0])})();
+EXP.rsh={tab:'RSH',title:'Bascule RS synchrone (RSH)',ref:'CI 7408 (ET) + CI 7402 (NOR) · brochage du polycopié',
+ desc:'Les portes ET du 7408 calculent R·H et S·H, puis la RS à NOR du 7402 mémorise. Tant que H = 0, S et R n\'ont aucun effet. Le bouton « Chronogramme de l\'énoncé » rejoue les signaux S, R, H de la partie théorie.',
+ note:'Pendant H = 1 la bascule se comporte comme une RS ; pendant H = 0 elle mémorise. Dans le chronogramme de l\'énoncé, S = R = 1 pendant H = 1 donne l\'état interdit Q = Q̄ = 0. L\'état initial, inconnu dans l\'énoncé, est pris ici égal à 0.',
+ st:{S:0,R:0,H:0,Q:0,Qb:1},sigs:['S','R','H','Q','Q̄'],
+ build(){const s=this.st;const b=board(18,10.5);
+  const A=chip('7408',14,-3.2,-0.8,N7408), N=chip('7402',14,3.0,-0.8,N7402);
+  for(const P of[A,N]){wire(P[14],V(P[14].x,b.railP),'red',0.4);wire(P[7],V(P[7].x,b.railN2),'blue',0.4)}
+  const mk=(k,x)=>toggleSwitch(x,2.5,k,()=>s[k],v=>{s[k]=v;this.eval()});
+  this.sw={R:mk('R',-7.6),H:mk('H',-6.2),S:mk('S',-4.8)};
+  wire(this.sw.R.pos,A[1],'orange',1.4);wire(this.sw.H.pos,A[2],'grey',1.1);wire(this.sw.H.pos,A[5],'grey',1.7);wire(this.sw.S.pos,A[4],'orange',0.8);
+  wire(A[3],N[1],'yellow',1.0);wire(A[6],N[5],'yellow',1.3);
+  wire(N[3],N[4],'green',0.45);wire(N[6],N[2],'purple',0.75);
+  this.L={Q:led(5.8,2.4,'Q'),Qb:led(7.2,2.4,'Q̄',0xff9a1a)};
+  wire(N[3],V(5.8,2.2),'green',1.6);wire(N[6],V(7.2,2.2),'purple',1.1);
+  wire(this.L.Q.pos,V(5.8,b.railN2),'blue',0.2);wire(this.L.Qb.pos,V(7.2,b.railN2),'blue',0.2);
+  label('7408 : 1Y = R·H , 2Y = S·H',-3.2,1.25,-2.7,0.32);label('7402 : RS à NOR',3.0,1.25,-2.7,0.32);
+  camera.position.set(0,13.5,11);controls.target.set(0,0,0.2);},
+ eval(rec=true){const s=this.st;if(s.H){const was11=s.Q===0&&s.Qb===0;
+   if(s.S&&s.R){s.Q=0;s.Qb=0}else if(s.S){s.Q=1;s.Qb=0}else if(s.R){s.Q=0;s.Qb=1}else if(was11){s.Q=Math.random()<.5?1:0;s.Qb=1-s.Q}}
+  if(rec)this.log();refresh()},
+ log(){const s=this.st;record({S:s.S,R:s.R,H:s.H,Q:s.Q,'Q̄':s.Qb})},
+ play(){setAuto(false);const s=this.st;Object.assign(s,{S:0,R:0,H:0,Q:0,Qb:1});hist=[];this.log();refresh();
+  let i=0;this.playing=setInterval(()=>{if(i>=TP_EVENTS.length||cur!==this){clearInterval(this.playing);this.playing=null;if(cur===this)renderPanel();return}
+   const k=TP_EVENTS[i++][1];s[k]^=1;this.eval()},420);renderPanel()},
+ sync(){const s=this.st;Object.values(this.sw).forEach(w=>w.refresh());this.L.Q.set(s.Q);this.L.Qb.set(s.Qb)},
+ controls(){const s=this.st;const t=k=>({id:k,label:`${k} = ${s[k]}`,on:s[k],fn:()=>{s[k]^=1;this.eval()}});
+  return[t('S'),t('R'),t('H'),{id:'play',type:'act',run:!!this.playing,label:this.playing?'Lecture…':'Chronogramme de l\'énoncé',fn:()=>{if(!this.playing)this.play()}}]},
+ state(){const s=this.st;return[['Q',s.Q],['Q̄',s.Qb],['Bascule',s.H?'active':'verrouillée']]},
+ table(){const s=this.st;return{head:['H','S','R','Q⁺','État'],rows:[['0','X','X','Q','Mémoire'],['1','0','0','Q','Mémoire'],['1','0','1','0','Mise à 0'],['1','1','0','1','Mise à 1'],['1','1','1','0 (Q̄ = 0)','Interdit']],cur:s.H?1+s.S*2+s.R:0}}};
+
+/* --- 1c. JK maître-esclave construite avec deux RSH --- */
+EXP.jkme={tab:'JK maître-esclave',title:'JK maître-esclave à partir de deux RSH',ref:'Partie simulation, question 3 · 7408 + 7404 + deux modules RSH',
+ desc:'Le 7408 calcule J·Q̄ (vers S du maître) et K·Q (vers R du maître). Le maître est commandé par H, l\'esclave par H̄ (7404). Observe Qm changer pendant H = 1, puis Q le recopier quand H redescend.',
+ note:'Le rebouclage correct est Q̄ de l\'esclave vers S du maître (avec J) et Q vers R du maître (avec K) ; l\'énoncé écrit deux fois « Q ». Comme Q ne change qu\'au front descendant, J = K = 1 donne un basculement propre.',
+ st:{J:1,K:1,H:0,Qm:0,Q:0},sigs:['H','J','K','Qm','Q'],
+ build(){const s=this.st;const b=board(19,11);
+  const G=chip('7408',14,-4.6,-2.0,N7408);
+  const I=chip('7404',14,-4.6,1.4,['1A','1Y','2A','2Y','3A','3Y','GND','4Y','4A','5Y','5A','6Y','6A','Vcc']);
+  const M=chip('MAÎTRE',8,0.6,-1.6,['S','H','R','GND','Q̄m','Qm','','Vcc']);
+  const E=chip('ESCLAVE',8,4.8,-1.6,['S','H','R','GND','Q̄','Q','','Vcc']);
+  for(const P of[G,I]){wire(P[14],V(P[14].x,b.railP),'red',0.35);wire(P[7],V(P[7].x,b.railN2),'blue',0.35)}
+  for(const P of[M,E]){wire(P[8],V(P[8].x,b.railP),'red',0.35);wire(P[4],V(P[4].x,b.railN2),'blue',0.4)}
+  const mk=(k,x)=>toggleSwitch(x,3.6,k,()=>s[k],v=>{s[k]=v;this.log();refresh()});
+  this.sw={J:mk('J',-8.4),K:mk('K',-7.0)};
+  const btn=pushButton(-8.4,0.6,'H',()=>this.pulse());this.btn=btn.mesh;
+  wire(this.sw.J.pos,G[1],'yellow',1.8);wire(this.sw.K.pos,G[4],'yellow',1.5);
+  wire(G[3],M[1],'orange',1.2);wire(G[6],M[3],'orange',0.8);
+  wire(btn.pos,M[2],'grey',1.6);wire(btn.pos,I[1],'grey',0.6);wire(I[2],E[2],'grey',1.1);
+  wire(M[6],E[1],'green',0.7);wire(M[5],E[3],'purple',0.9);
+  wire(E[5],G[2],'purple',2.4);wire(E[6],G[5],'green',2.0);
+  this.L={Qm:led(1.4,2.6,'Qm',0x3b82f6),Q:led(5.2,2.6,'Q'),Qb:led(6.6,2.6,'Q̄',0xff9a1a)};
+  wire(M[6],V(1.4,2.4),'green',1.3);wire(E[6],V(5.2,2.4),'green',1.6);wire(E[5],V(6.6,2.4),'purple',1.3);
+  Object.values(this.L).forEach(l=>wire(l.pos,V(l.pos.x,b.railN2),'blue',0.2));
+  label('J·Q̄ → S maître   K·Q → R maître',-4.6,1.3,-3.6,0.32);label('H̄ (7404) → H esclave',-4.6,1.25,3.1,0.32);
+  camera.position.set(0,14.5,12);controls.target.set(0,0,0);},
+ log(){const s=this.st;record({H:s.H,J:s.J,K:s.K,Qm:s.Qm,Q:s.Q})},
+ tick(){const s=this.st;s.H^=1;
+  if(s.H){const S=s.J&(1-s.Q),R=s.K&s.Q;if(S)s.Qm=1;else if(R)s.Qm=0}else{s.Q=s.Qm}
+  this.btn.position.y=s.H?0.1:0.2;this.log();refresh()},
+ pulse(){if(timer)return;this.tick();setTimeout(()=>this.tick(),500)},
+ sync(){const s=this.st;this.sw.J.refresh();this.sw.K.refresh();this.L.Qm.set(s.Qm);this.L.Q.set(s.Q);this.L.Qb.set(1-s.Q)},
+ controls(){const s=this.st;return[{id:'J',label:`J = ${s.J}`,on:s.J,fn:()=>{s.J^=1;this.log();refresh()}},{id:'K',label:`K = ${s.K}`,on:s.K,fn:()=>{s.K^=1;this.log();refresh()}},
+  {id:'p',type:'act',label:'Impulsion H',fn:()=>this.pulse()},{id:'a',type:'act',run:!!timer,label:timer?'Arrêter l\'horloge':'Horloge auto',fn:()=>{setAuto(!timer,600);renderPanel()}}]},
+ state(){const s=this.st;return[['H',s.H],['Qm',s.Qm],['Q',s.Q],['Actif',s.H?'maître':'esclave']]},
+ table(){const s=this.st;return{head:['J','K','Q⁺ (H↓)','Fonction'],rows:[['0','0','Q','Mémoire'],['0','1','0','Mise à 0'],['1','0','1','Mise à 1'],['1','1','Q̄','Basculement']],cur:s.J*2+s.K}}};
+
+/* --- 2. Bascule JK : 7473 --- */
+EXP.jk={tab:'JK (7473)',title:'Bascule JK maître-esclave',ref:'CI 7473 · Vcc broche 4, GND broche 11',
+ desc:'Choisis J et K puis envoie des impulsions d\'horloge. La sortie change au front descendant de H. Avec J = K = 1, Q bascule à chaque impulsion.',
+ note:'Avec J = K = 1, la LED clignote deux fois moins vite que l\'horloge : la JK divise la fréquence par 2. CLR (broche 2) est relié à +5 V car il est actif à l\'état bas.',
+ st:{J:1,K:1,H:0,Q:0},sigs:['H','J','K','Q'],
+ build(){const s=this.st;const b=board(16,10);
+  const P=chip('7473',14,0.5,-0.6,['1CLK','1CLR','1K','Vcc','2CLK','2CLR','2J','2Q̄','2Q','2K','GND','1Q','1Q̄','1J']);
+  wire(P[4],V(P[4].x,b.railP2),'red',0.4);wire(P[11],V(P[11].x,b.railN),'blue',0.4);
+  wire(P[2],V(P[2].x,b.railP2),'red',0.3);
+  this.sw={J:toggleSwitch(-6.6,2.5,'J',()=>s.J,v=>{s.J=v;this.log();refresh()}),K:toggleSwitch(-5.2,2.5,'K',()=>s.K,v=>{s.K=v;this.log();refresh()})};
+  const btn=pushButton(-3.6,2.6,'H',()=>this.pulse());
+  wire(this.sw.J.pos,P[14],'yellow',1.6);wire(this.sw.K.pos,P[3],'yellow',0.9);wire(btn.pos,P[1],'grey',0.7);
+  this.btn=btn.mesh;
+  this.L={Q:led(4.6,2.3,'Q'),Qb:led(6.0,2.3,'Q̄',0xff9a1a)};
+  wire(P[12],V(4.6,2.1),'green',1.2);wire(P[13],V(6.0,2.1),'purple',1.5);
+  wire(this.L.Q.pos,V(4.6,b.railN2),'blue',0.2);wire(this.L.Qb.pos,V(6.0,b.railN2),'blue',0.2);
+  camera.position.set(0,12.5,10.5);controls.target.set(0,0,0.2);},
+ log(){const s=this.st;record({H:s.H,J:s.J,K:s.K,Q:s.Q})},
+ tick(){const s=this.st;if(s.H){s.H=0;const J=s.J,K=s.K;if(J&&K)s.Q^=1;else if(J)s.Q=1;else if(K)s.Q=0}else s.H=1;
+  this.btn.position.y=s.H?0.1:0.2;this.log();refresh()},
+ pulse(){if(timer)return;this.tick();setTimeout(()=>this.tick(),260)},
+ sync(){const s=this.st;this.sw.J.refresh();this.sw.K.refresh();this.L.Q.set(s.Q);this.L.Qb.set(1-s.Q)},
+ controls(){const s=this.st;return[{id:'J',label:`J = ${s.J}`,on:s.J,fn:()=>{s.J^=1;this.log();refresh()}},{id:'K',label:`K = ${s.K}`,on:s.K,fn:()=>{s.K^=1;this.log();refresh()}},
+  {id:'p',type:'act',label:'Impulsion H',fn:()=>this.pulse()},{id:'a',type:'act',run:!!timer,label:timer?'Arrêter l\'horloge':'Horloge auto',fn:()=>{setAuto(!timer,450);renderPanel()}}]},
+ state(){const s=this.st;return[['H',s.H],['Q',s.Q],['Q̄',1-s.Q]]},
+ table(){const s=this.st;return{head:['J','K','Q⁺ (H↓)','Fonction'],rows:[['0','0','Q','Mémoire'],['0','1','0','Mise à 0'],['1','0','1','Mise à 1'],['1','1','Q̄','Basculement']],cur:s.J*2+s.K}}};
+
+/* --- 3. Compteur 3 bits --- */
+EXP.cpt={tab:'Compteur 3 bits',title:'Compteur binaire 3 bits',ref:'2 × 7473 + 7447 + afficheur 7 segments',
+ desc:'Trois JK avec J = K = 1, montées en cascade : la sortie Q de chaque bascule sert d\'horloge à la suivante. Q0, Q1, Q2 attaquent les entrées A, B, C du 7447 (D à la masse).',
+ note:'L\'afficheur compte 0 → 7 puis revient à 0 (modulo 8). Chaque bascule divise la fréquence par 2 : Q0 = f/2, Q1 = f/4, Q2 = f/8. Le 7447 a des sorties actives à l\'état bas : afficheur à anode commune.',
+ st:{H:0,n:0},sigs:['H','Q0','Q1','Q2'],
+ build(){const s=this.st;const b=board(18,11);
+  const A=chip('7473',14,-4.6,-1.4,['1CLK','1CLR','1K','Vcc','2CLK','2CLR','2J','2Q̄','2Q','2K','GND','1Q','1Q̄','1J']);
+  const B=chip('7473',14,-0.4,-1.4,['1CLK','1CLR','1K','Vcc','2CLK','2CLR','2J','2Q̄','2Q','2K','GND','1Q','1Q̄','1J']);
+  const D=chip('7447',16,4.2,-1.4,['B','C','LT','RBO','RBI','D','A','GND','e','d','c','b','a','g','f','Vcc']);
+  for(const P of[A,B]){wire(P[4],V(P[4].x,b.railP2),'red',0.35);wire(P[11],V(P[11].x,b.railN),'blue',0.35);
+    for(const k of[2,3,14])wire(P[k],V(P[k].x,b.railP2+(k===14?0:0)),'red',k===14?1.0:0.3);}
+  wire(A[6],V(A[6].x,b.railP2),'red',0.3);wire(A[7],V(A[7].x,b.railP2),'red',0.3);wire(A[10],V(A[10].x,b.railP2),'red',0.6);
+  wire(D[16],V(D[16].x,b.railN),'red',0.35);wire(D[8],V(D[8].x,b.railN2),'blue',0.35);wire(D[6],V(D[6].x,b.railN2),'blue',0.5);
+  wire(A[12],A[5],'green',0.7);wire(A[9],B[1],'blue',0.9);
+  wire(A[12],D[7],'green',1.9);wire(A[9],D[1],'blue',1.6);wire(B[12],D[2],'red',1.3);
+  const btn=pushButton(-7.6,1.6,'H',()=>this.pulse());wire(btn.pos,A[1],'grey',0.6);this.btn=btn.mesh;
+  this.seg=sevenSeg(7.6,-1.4);
+  const sp=this.seg.pins;[[13,'a'],[12,'b'],[11,'c'],[10,'d'],[9,'e'],[15,'f'],[14,'g']].forEach(([p,k],i)=>wire(D[p],sp[k],'white',0.4+i*0.08));
+  this.L=[led(-3.5,2.9,'Q0',0x22c55e),led(-1.8,2.9,'Q1',0x3b82f6),led(-0.1,2.9,'Q2',0xff2a3c)];
+  wire(A[12],V(-3.5,2.7),'green',1.4);wire(A[9],V(-1.8,2.7),'blue',1.2);wire(B[12],V(-0.1,2.7),'red',1.0);
+  this.L.forEach(l=>wire(l.pos,V(l.pos.x,b.railN2),'blue',0.2));
+  camera.position.set(0,14,12);controls.target.set(0,0,0);},
+ log(){const s=this.st;record({H:s.H,Q0:s.n&1,Q1:(s.n>>1)&1,Q2:(s.n>>2)&1})},
+ tick(){const s=this.st;if(s.H){s.H=0;s.n=(s.n+1)%8}else s.H=1;this.btn.position.y=s.H?0.1:0.2;this.log();refresh()},
+ pulse(){if(timer)return;this.tick();setTimeout(()=>this.tick(),220)},
+ sync(){const s=this.st;this.L.forEach((l,i)=>l.set((s.n>>i)&1));this.seg.set(s.n)},
+ controls(){return[{id:'p',type:'act',label:'Impulsion H',fn:()=>this.pulse()},{id:'a',type:'act',run:!!timer,label:timer?'Arrêter l\'horloge':'Horloge auto',fn:()=>{setAuto(!timer,380);renderPanel()}},
+  {id:'z',label:'Remise à 0',fn:()=>{this.st.n=0;this.log();refresh()}}]},
+ state(){const s=this.st;return[['Q2Q1Q0',(s.n>>2&1)+''+(s.n>>1&1)+(s.n&1)],['Affiché',s.n]]},
+ table(){const s=this.st;return{head:['Front ↓','Q2','Q1','Q0','Afficheur'],rows:[...Array(8)].map((_,i)=>[i,i>>2&1,i>>1&1,i&1,String(i)]),cur:s.n}}};
+
+/* --- 4. Registre 74194 --- */
+EXP.reg={tab:'Registre 74194',title:'Registre à décalage 4 bits',ref:'CI 74194 · Vcc broche 16, GND broche 8',
+ desc:'Les entrées parallèles A B C D sont réglées sur 0110. Choisis le mode avec S1 S0, règle les entrées série SR et SL, puis envoie des fronts d\'horloge.',
+ note:'Toutes les opérations se font au front montant de l\'horloge. En lisant QA QB QC QD (QA = poids fort), un décalage à gauche avec 0 multiplie par 2 (0110 → 1100), un décalage à droite divise par 2 (0110 → 0011).',
+ st:{S1:1,S0:1,SR:0,SL:0,A:0,B:1,C:1,D:0,H:0,Q:[0,0,0,0]},sigs:['H','QA','QB','QC','QD'],
+ build(){const s=this.st;const b=board(18,11);
+  const P=chip('74194',16,0.3,-1.2,['CLR','SR','A','B','C','D','SL','GND','S0','S1','CLK','QD','QC','QB','QA','Vcc']);
+  wire(P[16],V(P[16].x,b.railN),'red',0.35);wire(P[8],V(P[8].x,b.railN2),'blue',0.35);wire(P[1],V(P[1].x,b.railP2),'red',0.3);
+  const mk=(k,x,pin,col)=>{const sw=toggleSwitch(x,2.7,k,()=>s[k],v=>{s[k]=v;this.log();refresh()});wire(sw.pos,P[pin],col,0.8+Math.abs(x)*0.08);return sw};
+  this.sw={SR:mk('SR',-7.6,2,'orange'),A:mk('A',-6.2,3,'yellow'),B:mk('B',-4.8,4,'yellow'),C:mk('C',-3.4,5,'yellow'),D:mk('D',-2.0,6,'yellow'),SL:mk('SL',-0.6,7,'orange')};
+  const mkTop=(k,x,pin)=>{const sw=toggleSwitch(x,-4.0,k,()=>s[k],v=>{s[k]=v;this.log();refresh()});wire(V(x,-3.5),P[pin],'purple',0.7);return sw};
+  this.sw.S0=mkTop('S0',-5.4,9);this.sw.S1=mkTop('S1',-6.8,10);
+  const btn=pushButton(-3.6,-4.0,'CLK',()=>this.pulse());wire(V(-3.6,-3.6),P[11],'grey',0.6);this.btn=btn.mesh;
+  this.L=['QA','QB','QC','QD'].map((n,i)=>led(4.0+i*1.3,2.7,n));
+  [15,14,13,12].forEach((p,i)=>wire(P[p],V(4.0+i*1.3,2.5),'green',1.0+i*0.15));
+  this.L.forEach(l=>wire(l.pos,V(l.pos.x,b.railN2),'blue',0.2));
+  label('S1 S0 : 00 maintien · 01 droite · 10 gauche · 11 chargement',2.6,1.2,-4.0,0.32);
+  camera.position.set(0,14,12);controls.target.set(0,0,-0.2);},
+ mode(){const s=this.st;return ['Maintien','Décalage à droite','Décalage à gauche','Chargement parallèle'][s.S1*2+s.S0]},
+ log(){const s=this.st;record({H:s.H,QA:s.Q[0],QB:s.Q[1],QC:s.Q[2],QD:s.Q[3]})},
+ tick(){const s=this.st;s.H^=1;
+  if(s.H){const q=s.Q,m=s.S1*2+s.S0;
+   if(m===3)s.Q=[s.A,s.B,s.C,s.D];else if(m===1)s.Q=[s.SR,q[0],q[1],q[2]];else if(m===2)s.Q=[q[1],q[2],q[3],s.SL];}
+  this.btn.position.y=s.H?0.1:0.2;this.log();refresh()},
+ pulse(){if(timer)return;this.tick();setTimeout(()=>this.tick(),240)},
+ sync(){const s=this.st;Object.values(this.sw).forEach(w=>w.refresh());this.L.forEach((l,i)=>l.set(s.Q[i]))},
+ controls(){const s=this.st;const t=k=>({id:k,label:`${k} = ${s[k]}`,on:s[k],fn:()=>{s[k]^=1;this.log();refresh()}});
+  return[t('S1'),t('S0'),t('SR'),t('SL'),{id:'p',type:'act',label:'Front CLK ↑',fn:()=>this.pulse()},
+   {id:'a',type:'act',run:!!timer,label:timer?'Arrêter l\'horloge':'Horloge auto',fn:()=>{setAuto(!timer,500);renderPanel()}},
+   {id:'clr',label:'CLEAR',fn:()=>{s.Q=[0,0,0,0];this.log();refresh()}}]},
+ state(){const s=this.st;return[['Mode',this.mode()],['QA QB QC QD',s.Q.join(' ')],['Valeur',parseInt(s.Q.join(''),2)]]},
+ table(){const s=this.st;return{head:['S1','S0','Mode au front ↑'],rows:[['0','0','Maintien'],['0','1','Droite : QA ← SR'],['1','0','Gauche : QD ← SL'],['1','1','Chargement A B C D']],cur:s.S1*2+s.S0}}};
+
+/* ================= TP1 & TP2 (logique combinatoire) ================= */
+const NG=['1A','1B','1Y','2A','2B','2Y','GND','3Y','3A','3B','4Y','4A','4B','Vcc']; // 7408/7432/7486
+const NN=['1A','1Y','2A','2Y','3A','3Y','GND','4Y','4A','5Y','5A','6Y','6A','Vcc']; // 7404
+function powerChip(P,n,b){const v=n===14?[14,7]:[16,8];wire(P[v[0]],V(P[v[0]].x,b.railP),'red',0.35);wire(P[v[1]],V(P[v[1]].x,b.railN2),'blue',0.35)}
+function rebuild(){clearScene();cur.build();refresh()}
+function bits(n,w){return [...Array(w)].map((_,i)=>(n>>(w-1-i))&1).join('')}
+function comb(cfg){
+  const E={tab:cfg.tab,title:cfg.title,ref:cfg.ref,desc:cfg.desc,note:cfg.note,st:Object.assign({},cfg.init||{}),cfg};
+  cfg.inputs.forEach(k=>{if(E.st[k]===undefined)E.st[k]=0});
+  E.sigs=cfg.sigs||[...cfg.inputs,...cfg.outputs.map(o=>o.n)];
+  E.out=()=>Object.fromEntries(cfg.outputs.map(o=>[o.n,o.f(E.st)?1:0]));
+  E.sw={};E.leds={};
+  E.mkSw=(k,x,z)=>{const w=toggleSwitch(x,z,k,()=>E.st[k],v=>{E.st[k]=v;E.log();refresh()});E.sw[k]=w;return w};
+  E.build=function(){this.sw={};this.leds={};this.seg=null;cfg.build.call(this,this.st)};
+  E.log=function(){record(Object.assign({},this.st,this.out()))};
+  E.sync=function(){Object.values(this.sw).forEach(w=>w.refresh());const o=this.out();for(const k in this.leds)this.leds[k].set(o[k]);if(cfg.sync)cfg.sync.call(this,o)};
+  E.controls=function(){return (cfg.ctrlInputs||cfg.inputs).map(k=>({id:k,label:`${k} = ${this.st[k]}`,on:this.st[k],fn:()=>{this.st[k]^=1;this.log();refresh()}})).concat(cfg.extra?cfg.extra.call(this):[])};
+  E.state=function(){return cfg.state?cfg.state.call(this):cfg.outputs.map(o=>[o.n,this.out()[o.n]])};
+  E.table=function(){if(cfg.table)return cfg.table.call(this);
+    const ins=cfg.inputs,n=ins.length,rows=[];
+    for(let i=0;i<(1<<n);i++){const s=Object.assign({},this.st);ins.forEach((k,j)=>s[k]=(i>>(n-1-j))&1);rows.push([...ins.map(k=>s[k]),...cfg.outputs.map(o=>o.f(s)?1:0)])}
+    const curI=ins.reduce((a,k)=>a*2+this.st[k],0);return{head:[...ins,...cfg.outputs.map(o=>o.n)],rows,cur:curI}};
+  return E;
+}
+
+/* ----- TP1 a : portes de base ----- */
+const GATES={'7404':{nom:'NON',f:s=>!s.A,eq:'S = Ā'},'7408':{nom:'ET',f:s=>s.A&&s.B,eq:'S = A·B'},'7432':{nom:'OU',f:s=>s.A||s.B,eq:'S = A + B'},'7486':{nom:'OU exclusif',f:s=>s.A^s.B,eq:'S = A ⊕ B'}};
+EXP.portes=comb({tab:'Portes de base',title:'Circuits 7404, 7408, 7432, 7486',ref:'Partie pratique a · porte n°1 de chaque circuit',
+ desc:'Choisis le circuit intégré, puis bascule A et B. La LED S montre la sortie de la première porte du boîtier.',
+ note:'7404 : 6 inverseurs (entrée 1, sortie 2). 7408, 7432, 7486 : 4 portes à 2 entrées (entrées 1 et 2, sortie 3). Vcc broche 14, GND broche 7.',
+ inputs:['A','B'],init:{chip:'7408'},sigs:['A','B','S'],
+ outputs:[{n:'S',f:s=>GATES[s.chip].f(s)}],
+ build(s){const b=board(16,10);const P=chip(s.chip,14,0.8,-0.8,s.chip==='7404'?NN:NG);powerChip(P,14,b);
+  const a=this.mkSw('A',-5.6,2.4);wire(a.pos,P[1],'orange',1.0);
+  if(s.chip!=='7404'){const bb=this.mkSw('B',-4.2,2.4);wire(bb.pos,P[2],'orange',0.7)}
+  this.leds.S=led(5.0,2.4,'S');wire(P[s.chip==='7404'?2:3],V(5.0,2.2),'green',1.4);wire(this.leds.S.pos,V(5.0,b.railN2),'blue',0.2);
+  label(GATES[s.chip].nom+' : '+GATES[s.chip].eq,0.8,1.25,-2.7,0.36);camera.position.set(0,12.5,10.5);controls.target.set(0,0,0.2)},
+ extra(){return Object.keys(GATES).map(c=>({id:'c'+c,type:'act',run:this.st.chip===c,label:c,fn:()=>{this.st.chip=c;hist=[];this.log();rebuild()}}))},
+ table(){const s=this.st,g=GATES[s.chip];if(s.chip==='7404')return{head:['A','S = Ā'],rows:[[0,1],[1,0]],cur:s.A};
+  return{head:['A','B',g.eq],rows:[[0,0],[0,1],[1,0],[1,1]].map(([a,b])=>[a,b,g.f({A:a,B:b})?1:0]),cur:s.A*2+s.B}},
+ state(){return[['Circuit',this.st.chip],['S',this.out().S]]}});
+
+/* ----- TP1 b : circuit 1 (figure 7) ----- */
+EXP.c1=comb({tab:'Circuit 1',title:'Circuit 1 (figure 7) : S = Ā · B',ref:'7404 (NON) + 7408 (ET)',
+ desc:'A passe par un inverseur puis entre dans une porte ET avec B. Remplis la table et cherche quand S vaut 1.',
+ note:'S = 1 seulement pour A = 0 et B = 1 : c\'est le seul terme Ā·B de l\'équation. Une sortie à 1 correspond à un « minterme ».',
+ inputs:['A','B'],outputs:[{n:'S',f:s=>!s.A&&s.B}],
+ build(){const b=board(16,10);const N=chip('7404',14,-2.6,-0.8,NN),G=chip('7408',14,3.2,-0.8,NG);powerChip(N,14,b);powerChip(G,14,b);
+  const a=this.mkSw('A',-6.6,2.4),bb=this.mkSw('B',-5.2,2.4);
+  wire(a.pos,N[1],'orange',0.8);wire(N[2],G[1],'yellow',1.0);wire(bb.pos,G[2],'orange',1.6);
+  this.leds.S=led(6.6,2.4,'S');wire(G[3],V(6.6,2.2),'green',1.2);wire(this.leds.S.pos,V(6.6,b.railN2),'blue',0.2);
+  label('Ā',-2.0,1.0,1.3,0.32);camera.position.set(0,12.5,10.5);controls.target.set(0,0,0.2)}});
+
+/* ----- TP1 c : circuit 2 (figure 8) ----- */
+EXP.c2=comb({tab:'Circuit 2',title:'Circuit 2 (figure 8) : S = Ā·B + A·B̄',ref:'7404 + 7408 + 7432',
+ desc:'Deux inverseurs, deux portes ET et une porte OU. Compare la table avec celle du 7486.',
+ note:'S = 1 quand A et B sont différents : ce circuit est un OU exclusif (XOR), S = A ⊕ B, construit avec des portes de base.',
+ inputs:['A','B'],outputs:[{n:'S',f:s=>s.A^s.B}],
+ build(){const b=board(18,10.5);const N=chip('7404',14,-4.4,-0.8,NN),G=chip('7408',14,0.4,-0.8,NG),O=chip('7432',14,5.2,-0.8,NG);[N,G,O].forEach(P=>powerChip(P,14,b));
+  const a=this.mkSw('A',-8.0,2.6),bb=this.mkSw('B',-6.6,2.6);
+  wire(a.pos,N[1],'orange',0.7);wire(bb.pos,N[3],'orange',0.6);
+  wire(N[2],G[1],'yellow',0.9);wire(bb.pos,G[2],'orange',1.5);wire(a.pos,G[4],'orange',1.9);wire(N[4],G[5],'yellow',1.2);
+  wire(G[3],O[1],'green',0.8);wire(G[6],O[2],'green',1.1);
+  this.leds.S=led(7.8,2.6,'S');wire(O[3],V(7.8,2.4),'green',1.0);wire(this.leds.S.pos,V(7.8,b.railN2),'blue',0.2);
+  camera.position.set(0,13.5,11.5);controls.target.set(0,0,0.2)}});
+
+/* ----- TP1 d : lois d'absorption ----- */
+const ABS={X1:'X1 = A + A·B',X2:'X2 = A·B̄ + A·B',X3:'X3 = A·(A + B)',X4:'X4 = (A + B̄)·(A + B)'};
+const ABSF={X1:s=>s.A|(s.A&s.B),X2:s=>(s.A&(1-s.B))|(s.A&s.B),X3:s=>s.A&(s.A|s.B),X4:s=>(s.A|(1-s.B))&(s.A|s.B)};
+EXP.abs=comb({tab:'Absorption',title:'Lois d\'absorption',ref:'7404 + 7408 + 7432 selon l\'équation',
+ desc:'Choisis l\'équation X1 à X4 : le câblage change. La LED X est comparée à la LED A.',
+ note:'Pour les quatre équations, la LED X s\'allume exactement comme A : X1 = X2 = X3 = X4 = A. B n\'a aucune influence (loi d\'absorption).',
+ inputs:['A','B'],init:{eq:'X1'},sigs:['A','B','X'],
+ outputs:[{n:'X',f:s=>ABSF[s.eq](s)},{n:'A ',f:s=>s.A}],
+ build(s){const b=board(18,10.5);const a=this.mkSw('A',-8.0,2.6),bb=this.mkSw('B',-6.6,2.6);let out;
+  if(s.eq==='X1'){const G=chip('7408',14,-2.0,-0.8,NG),O=chip('7432',14,3.8,-0.8,NG);[G,O].forEach(P=>powerChip(P,14,b));
+   wire(a.pos,G[1],'orange',0.7);wire(bb.pos,G[2],'orange',0.5);wire(a.pos,O[1],'orange',1.8);wire(G[3],O[2],'yellow',0.9);out=O[3]}
+  else if(s.eq==='X2'){const N=chip('7404',14,-3.6,-0.8,NN),G=chip('7408',14,0.9,-0.8,NG),O=chip('7432',14,5.4,-0.8,NG);[N,G,O].forEach(P=>powerChip(P,14,b));
+   wire(bb.pos,N[1],'orange',0.6);wire(a.pos,G[1],'orange',1.4);wire(N[2],G[2],'yellow',0.8);wire(a.pos,G[4],'orange',1.8);wire(bb.pos,G[5],'orange',1.5);
+   wire(G[3],O[1],'green',0.8);wire(G[6],O[2],'green',1.0);out=O[3]}
+  else if(s.eq==='X3'){const O=chip('7432',14,-2.0,-0.8,NG),G=chip('7408',14,3.8,-0.8,NG);[G,O].forEach(P=>powerChip(P,14,b));
+   wire(a.pos,O[1],'orange',0.7);wire(bb.pos,O[2],'orange',0.5);wire(a.pos,G[1],'orange',1.8);wire(O[3],G[2],'yellow',0.9);out=G[3]}
+  else{const N=chip('7404',14,-3.6,-0.8,NN),O=chip('7432',14,0.9,-0.8,NG),G=chip('7408',14,5.4,-0.8,NG);[N,G,O].forEach(P=>powerChip(P,14,b));
+   wire(bb.pos,N[1],'orange',0.6);wire(a.pos,O[1],'orange',1.4);wire(N[2],O[2],'yellow',0.8);wire(a.pos,O[4],'orange',1.8);wire(bb.pos,O[5],'orange',1.5);
+   wire(O[3],G[1],'green',0.8);wire(O[6],G[2],'green',1.0);out=G[3]}
+  this.leds.X=led(7.6,2.6,'X');this.leds['A ']=led(8.8,-3.4,'A',0x3b82f6);
+  wire(out,V(7.6,2.4),'green',1.1);wire(this.leds.X.pos,V(7.6,b.railN2),'blue',0.2);
+  label(ABS[s.eq],0,1.3,-3.0,0.4);camera.position.set(0,13.5,11.5);controls.target.set(0,0,0)},
+ extra(){return Object.keys(ABS).map(k=>({id:'e'+k,type:'act',run:this.st.eq===k,label:k,fn:()=>{this.st.eq=k;hist=[];this.log();rebuild()}}))},
+ table(){const s=this.st;return{head:['A','B',s.eq,'= A ?'],rows:[[0,0],[0,1],[1,0],[1,1]].map(([a,b])=>{const x=ABSF[s.eq]({A:a,B:b});return[a,b,x,x===a?'oui':'non']}),cur:s.A*2+s.B}},
+ state(){return[['Équation',ABS[this.st.eq]],['X',this.out().X]]}});
+
+/* ----- TP1 e : circuit majoritaire ----- */
+EXP.maj=comb({tab:'Majoritaire',title:'Circuit majoritaire à 3 entrées',ref:'7408 (3 portes ET) + 7432 (2 portes OU)',
+ desc:'La sortie M recopie l\'état majoritaire des trois entrées A, B, C. M = A·B + A·C + B·C.',
+ note:'M = 1 dès qu\'au moins deux entrées valent 1 (lignes 011, 101, 110, 111). L\'équation simplifiée par Karnaugh est M = AB + AC + BC.',
+ inputs:['A','B','C'],outputs:[{n:'M',f:s=>(s.A&s.B)|(s.A&s.C)|(s.B&s.C)}],
+ build(){const b=board(18,10.5);const G=chip('7408',14,-1.6,-0.8,NG),O=chip('7432',14,4.2,-0.8,NG);[G,O].forEach(P=>powerChip(P,14,b));
+  const a=this.mkSw('A',-8.0,2.6),bb=this.mkSw('B',-6.6,2.6),c=this.mkSw('C',-5.2,2.6);
+  wire(a.pos,G[1],'orange',0.9);wire(bb.pos,G[2],'orange',0.7);wire(a.pos,G[4],'orange',1.3);wire(c.pos,G[5],'orange',0.9);
+  wire(bb.pos,G[9],'orange',2.4);wire(c.pos,G[10],'orange',2.1);
+  wire(G[3],O[1],'yellow',1.0);wire(G[6],O[2],'yellow',1.2);wire(O[3],O[4],'green',0.4);wire(G[8],O[5],'yellow',1.6);
+  this.leds.M=led(7.8,2.6,'M');wire(O[6],V(7.8,2.4),'green',1.0);wire(this.leds.M.pos,V(7.8,b.railN2),'blue',0.2);
+  label('AB, AC, BC',-1.6,1.25,-2.9,0.34);label('OU de 3 termes',4.2,1.25,-2.9,0.34);camera.position.set(0,13.5,11.5);controls.target.set(0,0,0.2)}});
+
+/* ----- TP1 f : théorème de De Morgan ----- */
+EXP.dem=comb({tab:'De Morgan',title:'Théorème de De Morgan',ref:'Partie théorie · 7404 + 7408 + 7432',
+ desc:'Les deux LED comparent les deux membres de l\'égalité. Change de loi avec les boutons.',
+ note:'Pour les 4 combinaisons de A et B, les deux LED sont toujours identiques : (A+B)‾ = Ā·B̄ et (A·B)‾ = Ā + B̄.',
+ inputs:['A','B'],init:{law:1},
+ outputs:[{n:'Gauche',f:s=>s.law===1?!(s.A|s.B):!(s.A&s.B)},{n:'Droite',f:s=>s.law===1?(!s.A&&!s.B):(!s.A||!s.B)}],
+ build(s){const b=board(18,10.5);const a=this.mkSw('A',-8.0,2.6),bb=this.mkSw('B',-6.6,2.6);
+  const F1=chip(s.law===1?'7432':'7408',14,-3.2,-2.0,NG),N=chip('7404',14,-3.2,1.2,NN),F2=chip(s.law===1?'7408':'7432',14,3.0,1.2,NG);[F1,N,F2].forEach(P=>powerChip(P,14,b));
+  wire(a.pos,F1[1],'orange',1.6);wire(bb.pos,F1[2],'orange',1.4);wire(F1[3],N[1],'yellow',1.4);
+  wire(a.pos,N[3],'orange',0.8);wire(bb.pos,N[5],'orange',0.7);wire(N[4],F2[1],'yellow',0.9);wire(N[6],F2[2],'yellow',1.1);
+  this.leds.Gauche=led(6.4,-2.4,s.law===1?'(A+B)‾':'(A·B)‾',0xff2a3c);this.leds.Droite=led(7.8,3.2,s.law===1?'Ā·B̄':'Ā+B̄',0x3b82f6);
+  wire(N[2],V(6.4,-2.6),'green',1.8);wire(F2[3],V(7.8,3.0),'green',1.1);
+  camera.position.set(0,13.5,11.5);controls.target.set(0,0,0)},
+ extra(){return[{id:'l1',type:'act',run:this.st.law===1,label:'(A+B)‾ = Ā·B̄',fn:()=>{this.st.law=1;hist=[];this.log();rebuild()}},{id:'l2',type:'act',run:this.st.law===2,label:'(A·B)‾ = Ā+B̄',fn:()=>{this.st.law=2;hist=[];this.log();rebuild()}}]},
+ table(){const s=this.st,L=s.law===1;return{head:['A','B',L?'(A+B)‾':'(A·B)‾',L?'Ā·B̄':'Ā+B̄'],rows:[[0,0],[0,1],[1,0],[1,1]].map(([a,b])=>[a,b,L?+!(a|b):+!(a&b),L?+(!a&&!b):+(!a||!b)]),cur:s.A*2+s.B}}});
+
+/* ----- TP2 a : décodeur hexadécimal (Logisim) ----- */
+const HEX=['abcdef','bc','abdeg','abcdg','bcfg','acdfg','acdefg','abc','abcdefg','abcdfg','abcefg','cdefg','adef','bcdeg','adefg','aefg'];
+const E4=['E3','E2','E1','E0'],v4=(s,p)=>s[p+'3']*8+s[p+'2']*4+s[p+'1']*2+s[p+'0'];
+EXP.hex=comb({tab:'Décodeur hexa',title:'Décodeur 4 bits → afficheur (0 à F)',ref:'Partie simulation · circuit généré par Combinational Analysis (Logisim)',
+ desc:'Le bloc représente le circuit construit par Logisim à partir de la table de vérité. Les 4 entrées E3 E2 E1 E0 affichent les chiffres hexadécimaux 0 à F.',
+ note:'Chaque segment a sa propre équation, par exemple g = 0 seulement pour 0, 1, 7 et C. Logisim donne ces équations simplifiées dans l\'onglet « Expression ».',
+ inputs:E4,ctrlInputs:E4,sigs:['E3','E2','E1','E0'],outputs:[],
+ build(){const b=board(18,10.5);const D=chip('DÉCODEUR HEXA',14,0,-0.8,['E0','E1','E2','E3','','','GND','g','f','e','d','c','b','a']);
+  E4.forEach((k,i)=>{const w=this.mkSw(k,-8.2+i*1.4,2.6);wire(w.pos,D[3-i+1],'orange',0.7+i*0.25)});
+  this.seg=sevenSeg(7.2,-0.8);const sp=this.seg.pins;[[14,'a'],[13,'b'],[12,'c'],[11,'d'],[10,'e'],[9,'f'],[8,'g']].forEach(([p,k],i)=>wire(D[p],sp[k],'white',0.4+i*0.08));
+  camera.position.set(0,13.5,11.5);controls.target.set(0,0,0)},
+ sync(){this.seg.set(HEX[v4(this.st,'E')])},
+ state(){const n=v4(this.st,'E');return[['Binaire',bits(n,4)],['Affiché',n.toString(16).toUpperCase()]]},
+ table(){const n=v4(this.st,'E');return{head:['E3E2E1E0','Chiffre','Segments allumés'],rows:HEX.map((m,i)=>[bits(i,4),i.toString(16).toUpperCase(),m]),cur:n}}});
+
+/* ----- TP2 b : UAL 1 bit ----- */
+const OPS=['A·B (ET)','A + B (OU)','B̄ (NON)','A + B + Rin (addition)'];
+EXP.ual=comb({tab:'UAL 1 bit',title:'Unité arithmétique et logique 1 bit',ref:'Partie théorie · décodeur 2→4 + portes ET de validation',
+ desc:'F1 F0 commandent le décodeur qui valide une seule opération. 00 : ET, 01 : OU, 10 : NON B, 11 : addition avec retenue d\'entrée Rin.',
+ note:'Le décodeur active une seule ligne de validation : les autres résultats sont bloqués par leurs portes ET. Rout ne vaut 1 que pendant l\'addition (11).',
+ inputs:['F1','F0','A','B','Rin'],sigs:['F1','F0','A','B','Rin','R','Rout'],
+ outputs:[{n:'R',f:s=>[s.A&s.B,s.A|s.B,1-s.B,s.A^s.B^s.Rin][s.F1*2+s.F0]},{n:'Rout',f:s=>s.F1&&s.F0&&((s.A&s.B)|(s.Rin&(s.A^s.B)))}],
+ build(){const b=board(18,10.5);
+  const D=chip('DÉC 2→4',8,-3.0,-2.2,['F0','F1','','GND','L3','L2','L1','L0']);
+  const U=chip('UAL 1 bit',14,2.4,0.6,['A','B','Rin','L0','L1','L2','GND','L3','','','','Rout','R','Vcc']);
+  ['F1','F0'].forEach((k,i)=>{const w=this.mkSw(k,-8.4+i*1.4,-3.4);wire(V(w.pos.x,w.pos.z-1.0),D[2-i],'purple',0.7)});
+  ['A','B','Rin'].forEach((k,i)=>{const w=this.mkSw(k,-8.4+i*1.4,2.9);wire(w.pos,U[i+1],'orange',0.8+i*0.2)});
+  wire(D[8],U[4],'yellow',1.2);wire(D[7],U[5],'yellow',1.4);wire(D[6],U[6],'yellow',1.6);wire(D[5],U[8],'yellow',1.8);
+  this.leds.R=led(6.8,3.0,'R');this.leds.Rout=led(8.2,3.0,'Rout',0xff9a1a);
+  wire(U[13],V(6.8,2.8),'green',1.2);wire(U[12],V(8.2,2.8),'green',1.4);
+  camera.position.set(0,13.5,11.5);controls.target.set(0,0,0)},
+ state(){const s=this.st;return[['Opération',OPS[s.F1*2+s.F0]],['R',this.out().R],['Rout',this.out().Rout]]},
+ table(){const s=this.st;return{head:['F1','F0','Opération'],rows:OPS.map((o,i)=>[i>>1,i&1,o]),cur:s.F1*2+s.F0}}});
+
+/* ----- TP2 c : comparateur 7485 ----- */
+const A4=['A3','A2','A1','A0'],B4=['B3','B2','B1','B0'];
+function setNum(st,p,n){for(let i=0;i<4;i++)st[p+i]=(n>>i)&1}
+const CMP_TP=[[3,7],[12,10],[9,2],[11,15]];
+EXP.cmp=comb({tab:'Comparateur 7485',title:'Comparateur 4 bits 7485',ref:'Brochage du polycopié · Vcc 16, GND 8',
+ desc:'Règle A et B en binaire avec les interrupteurs ou les boutons du tableau du TP. Les entrées de cascade sont fixées : A>B = 0, A=B = 1, A<B = 0.',
+ note:'Le 7485 compare d\'abord les bits de poids fort (A3, B3) ; s\'ils sont égaux il passe aux suivants. Une seule des trois sorties est à 1.',
+ inputs:[...A4,...B4],sigs:['A>B','A=B','A<B'],init:{A3:0,A2:0,A1:1,A0:1,B3:0,B2:1,B1:1,B0:1},
+ outputs:[{n:'A>B',f:s=>v4(s,'A')>v4(s,'B')},{n:'A=B',f:s=>v4(s,'A')===v4(s,'B')},{n:'A<B',f:s=>v4(s,'A')<v4(s,'B')}],
+ build(){const b=board(20,11);const P=chip('7485',16,1.2,-1.4,['B3','A>B in','A=B in','A<B in','A>B','A=B','A<B','GND','B0','A0','B1','A1','A2','B2','A3','Vcc']);powerChip(P,16,b);
+  const pa={A0:10,A1:12,A2:13,A3:15},pb={B0:9,B1:11,B2:14,B3:1};
+  A4.forEach((k,i)=>{const w=this.mkSw(k,-9.2+i*1.25,-3.6);wire(V(w.pos.x,w.pos.z-1.0),P[pa[k]],'orange',0.8+i*0.15)});
+  B4.forEach((k,i)=>{const w=this.mkSw(k,-9.2+i*1.25,2.9);wire(w.pos,P[pb[k]],'yellow',0.8+i*0.2)});
+  wire(P[3],V(P[3].x,b.railP2),'red',0.3);wire(P[2],V(P[2].x,b.railN2),'blue',0.3);wire(P[4],V(P[4].x,b.railN2),'blue',0.3);
+  [['A>B',5,0xff2a3c],['A=B',6,0x22c55e],['A<B',7,0x3b82f6]].forEach(([n,p,c],i)=>{this.leds[n]=led(6.6+i*1.3,2.9,n,c);wire(P[p],V(6.6+i*1.3,2.7),'green',1.0+i*0.2)});
+  label('A',-7.3,1.2,-4.8,0.4);label('B',-7.3,1.2,1.7,0.4);camera.position.set(0,14.5,12.5);controls.target.set(0,0,-0.2)},
+ extra(){return CMP_TP.map(([a,b])=>({id:`t${a}_${b}`,type:'act',label:`${a} / ${b}`,fn:()=>{setNum(this.st,'A',a);setNum(this.st,'B',b);this.log();refresh()}}))},
+ state(){const s=this.st,a=v4(s,'A'),b=v4(s,'B');return[['A',`${a} = ${bits(a,4)}`],['B',`${b} = ${bits(b,4)}`],...Object.entries(this.out())]},
+ table(){const s=this.st,a=v4(s,'A'),b=v4(s,'B');const rows=CMP_TP.map(([x,y])=>[x,y,bits(x,4),bits(y,4),+(x>y),+(x<y),+(x===y)]);
+  return{head:['A','B','A (bin)','B (bin)','A>B','A<B','A=B'],rows,cur:CMP_TP.findIndex(([x,y])=>x===a&&y===b)}}});
+
+/* ----- TP2 d : additionneur 7483 ----- */
+const ADD_TP=[[3,7],[12,10],[9,2],[11,15],[15,15]];
+EXP.add=comb({tab:'Additionneur 7483',title:'Additionneur 4 bits 7483',ref:'Brochage du polycopié · Vcc 5, GND 12',
+ desc:'Règle A, B et la retenue d\'entrée Rin. Les LED S3…S0 et Rout donnent le résultat sur 5 bits.',
+ note:'Le plus grand calcul possible est 15 + 15 + 1 = 31 = 1 1111 : Rout joue le rôle du 5e bit. Rin sert à chaîner deux 7483 pour additionner sur 8 bits.',
+ inputs:[...A4,...B4,'Rin'],sigs:['Rin','S3','S2','S1','S0','Rout'],init:{A3:0,A2:0,A1:1,A0:1,B3:0,B2:1,B1:1,B0:1},
+ outputs:[0,1,2,3].map(i=>({n:'S'+i,f:s=>((v4(s,'A')+v4(s,'B')+s.Rin)>>i)&1})).concat([{n:'Rout',f:s=>(v4(s,'A')+v4(s,'B')+s.Rin)>>4}]),
+ build(){const b=board(20,11);const P=chip('7483',16,1.2,-1.4,['A3','S2','A2','B2','Vcc','S1','B1','A1','S0','A0','B0','GND','Rin','Rout','S3','B3']);
+  wire(P[5],V(P[5].x,b.railP2),'red',0.35);wire(P[12],V(P[12].x,b.railN),'blue',0.35);
+  const pa={A0:10,A1:8,A2:3,A3:1},pb={B0:11,B1:7,B2:4,B3:16};
+  A4.forEach((k,i)=>{const w=this.mkSw(k,-9.2+i*1.25,2.9);wire(w.pos,P[pa[k]],'orange',0.8+i*0.2)});
+  B4.forEach((k,i)=>{const w=this.mkSw(k,-9.2+i*1.25,-3.6);wire(V(w.pos.x,w.pos.z-1.0),P[pb[k]],'yellow',0.8+i*0.15)});
+  const r=this.mkSw('Rin',-3.6,-3.6);wire(V(r.pos.x,r.pos.z-1.0),P[13],'purple',0.9);
+  [['Rout',14],['S3',15],['S2',2],['S1',6],['S0',9]].forEach(([n,p],i)=>{this.leds[n]=led(4.6+i*1.2,2.9,n,n==='Rout'?0xff9a1a:0xff2a3c);wire(P[p],V(4.6+i*1.2,2.7),'green',0.9+i*0.15)});
+  label('A',-7.3,1.2,1.7,0.4);label('B',-7.3,1.2,-4.8,0.4);camera.position.set(0,14.5,12.5);controls.target.set(0,0,-0.2)},
+ extra(){return ADD_TP.map(([a,b])=>({id:`t${a}_${b}`,type:'act',label:`${a} + ${b}`,fn:()=>{setNum(this.st,'A',a);setNum(this.st,'B',b);this.log();refresh()}}))},
+ state(){const s=this.st,a=v4(s,'A'),b=v4(s,'B'),t=a+b+s.Rin;return[['A',`${a} = ${bits(a,4)}`],['B',`${b} = ${bits(b,4)}`],['Somme',`${t} = ${t>>4} ${bits(t&15,4)}`]]},
+ table(){const s=this.st,a=v4(s,'A'),b=v4(s,'B');const rows=ADD_TP.map(([x,y])=>{const t=x+y+s.Rin;return[x,y,bits(x,4),bits(y,4),bits(t&15,4),t>>4]});
+  return{head:['A','B','A (bin)','B (bin)','S (bin)','Rout'],rows,cur:ADD_TP.findIndex(([x,y])=>x===a&&y===b)}}});
+
+/* ----- TP2 e : multiplexeur 74153 ----- */
+EXP.mux=comb({tab:'Multiplexeur 74153',title:'Multiplexeur 4 → 1 (74153, première moitié)',ref:'Brochage du polycopié · Vcc 16, GND 8',
+ desc:'Les entrées de sélection B A choisissent laquelle des données 1C0 à 1C3 est recopiée sur la sortie 1Y. G (strobe) doit être à 0 pour valider.',
+ note:'Rôle du strobe G : actif à l\'état bas. G = 1 force la sortie à 0, quelles que soient les autres entrées. Un multiplexeur sert d\'aiguillage : il envoie une voie parmi quatre vers une ligne unique.',
+ inputs:['G','B','A','C0','C1','C2','C3'],sigs:['G','B','A','Y'],init:{C1:1,C3:1},
+ outputs:[{n:'Y',f:s=>!s.G&&s['C'+(s.B*2+s.A)]}],
+ build(){const b=board(20,11);const P=chip('74153',16,1.6,-1.4,['G1','B','1C3','1C2','1C1','1C0','1Y','GND','2Y','2C0','2C1','2C2','2C3','A','G2','Vcc']);powerChip(P,16,b);
+  const mk=(k,x,z,p,col,h)=>{const w=this.mkSw(k,x,z);wire(z<0?V(w.pos.x,w.pos.z-1.0):w.pos,P[p],col,h)};
+  mk('G',-8.8,2.9,1,'purple',0.8);mk('C3',-7.4,2.9,3,'yellow',1.0);mk('C2',-6.0,2.9,4,'yellow',1.1);mk('C1',-4.6,2.9,5,'yellow',1.2);mk('C0',-3.2,2.9,6,'yellow',1.3);
+  mk('B',-8.8,-3.6,2,'orange',1.4);mk('A',-7.4,-3.6,14,'orange',1.1);
+  wire(P[15],V(P[15].x,b.railP),'red',0.3);
+  this.leds.Y=led(6.8,2.9,'1Y');wire(P[7],V(6.8,2.7),'green',1.0);
+  camera.position.set(0,14.5,12.5);controls.target.set(0,0,-0.2)},
+ state(){const s=this.st;return[['Voie choisie',s.G?'aucune (G = 1)':'C'+(s.B*2+s.A)],['Y',this.out().Y]]},
+ table(){const s=this.st;const H=x=>x?'H':'L';
+  const rows=[['X','X','X','X','X','X','H','L'],['L','L','L','X','X','X','L','L'],['L','L','H','X','X','X','L','H'],['L','H','X','L','X','X','L','L'],['L','H','X','H','X','X','L','H'],['H','L','X','X','L','X','L','L'],['H','L','X','X','H','X','L','H'],['H','H','X','X','X','L','L','L'],['H','H','X','X','X','H','L','H']];
+  const c=s.G?0:1+(s.B*2+s.A)*2+s['C'+(s.B*2+s.A)];return{head:['B','A','C0','C1','C2','C3','G','Y'],rows,cur:c}}});
+
+/* ----- TP2 f : décodeur BCD 7447 ----- */
+const D47=['abcdef','bc','abdeg','abcdg','bcfg','acdfg','cdefg','abc','abcdefg','abcfg','deg','cdg','bfg','adfg','defg',''];
+EXP.bcd=comb({tab:'Décodeur 7447',title:'Décodeur BCD 7447 + afficheur 7 segments',ref:'Brochage du polycopié (figure 16) · Vcc 16, GND 8',
+ desc:'Le code BCD D C B A (0000 à 1001) est converti en 7 signaux qui allument les segments. Essaie aussi les codes 1010 à 1111.',
+ note:'Le 7447 affiche 6 sans le segment a et 9 sans le segment d. Pour 10 à 15 il affiche des symboles particuliers, et 1111 éteint tout. Ses sorties sont actives à l\'état bas : afficheur à anode commune.',
+ inputs:['D','C','B','A'],sigs:['D','C','B','A'],outputs:[],
+ build(){const b=board(19,10.5);const P=chip('7447',16,0.4,-1.2,['B','C','LT','RBO','RBI','D','A','GND','e','d','c','b','a','g','f','Vcc']);powerChip(P,16,b);
+  const pin={D:6,C:2,B:1,A:7};['D','C','B','A'].forEach((k,i)=>{const w=this.mkSw(k,-8.4+i*1.4,2.7);wire(w.pos,P[pin[k]],'orange',0.8+i*0.25)});
+  [3,4,5].forEach(p=>wire(P[p],V(P[p].x,b.railP2),'red',0.3));
+  this.seg=sevenSeg(7.2,-1.2);const sp=this.seg.pins;[[13,'a'],[12,'b'],[11,'c'],[10,'d'],[9,'e'],[15,'f'],[14,'g']].forEach(([p,k],i)=>wire(P[p],sp[k],'white',0.4+i*0.08));
+  camera.position.set(0,13.5,11.5);controls.target.set(0,0,0)},
+ sync(){const s=this.st;this.seg.set(D47[s.D*8+s.C*4+s.B*2+s.A])},
+ state(){const s=this.st,n=s.D*8+s.C*4+s.B*2+s.A;return[['DCBA',bits(n,4)],['Décimal',n],['Affichage',n<10?String(n):'symbole']]},
+ table(){const s=this.st;return{head:['D C B A','N','a b c d e f g'],rows:D47.map((m,i)=>[bits(i,4),i,'abcdefg'.split('').map(k=>m.includes(k)?1:0).join(' ')]),cur:s.D*8+s.C*4+s.B*2+s.A}}});
+
+/* ---------- onglets ---------- */
+const TPS=[{k:'tp1',label:'TP1',title:'Les circuits logiques',tabs:['portes','c1','c2','abs','maj','dem']},
+ {k:'tp2',label:'TP2',title:'Les opérateurs logiques et arithmétiques',tabs:['hex','ual','cmp','add','mux','bcd']},
+ {k:'tp3',label:'TP3',title:'Les circuits logiques séquentiels',tabs:['rs','rsh','jkme','jk','cpt','reg']}];
+const tpOf=key=>TPS.find(t=>t.tabs.includes(key));
+TPS.forEach(t=>{const b=document.createElement('button');b.className='tp';b.dataset.k=t.k;b.textContent=t.label;b.title=t.title;b.onclick=()=>load(t.tabs[0]);$('tps').appendChild(b)});
+function load(key){
+  setAuto(false);clearScene();cur=EXP[key];hist=[];sigNames=cur.sigs;
+  const T=tpOf(key);$('tpTitle').textContent=T.title;document.title=T.title;
+  document.querySelectorAll('.tp').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===T.k));
+  $('tabs').innerHTML='';T.tabs.forEach(k=>{const b=document.createElement('button');b.className='tab';b.setAttribute('role','tab');b.dataset.k=k;b.textContent=EXP[k].tab;b.setAttribute('aria-selected',k===key);b.onclick=()=>load(k);$('tabs').appendChild(b)});
+  $('ttl').textContent=cur.title;$('ref').textContent=cur.ref;$('desc').textContent=cur.desc;$('note').textContent=cur.note;
+  cur.build();cur.log?cur.log():record(Object.fromEntries(cur.sigs.map(s=>[s,0])));
+  if(key==='rs'){const s=cur.st;record({S:s.S,R:s.R,Q:s.Q,'Q̄':s.Qb});}
+  refresh();
+  try{localStorage.setItem('elecTab',key)}catch(e){}
+}
+
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();drawChrono()}
+new ResizeObserver(resize).observe(stage);new ResizeObserver(drawChrono).observe($('chrono'));
+let start='portes';try{const t=localStorage.getItem('elecTab');if(EXP[t])start=t}catch(e){}
+load(start);resize();
+(function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera)})();
+})();
+</script>

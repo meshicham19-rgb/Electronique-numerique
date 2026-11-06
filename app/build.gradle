@@ -1,0 +1,43 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'ma.mesbah.circuits'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'ma.mesbah.circuits'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+    buildTypes {
+        release { minifyEnabled false }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// Telecharge la bibliotheque 3D dans assets/ au premier Build (Internet requis une seule fois).
+// Ensuite l'application fonctionne entierement hors ligne.
+def assetsDir = file('src/main/assets')
+tasks.register('telechargerThreeJs') {
+    doLast {
+        def libs = [
+            'three.min.js'    : 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+            'OrbitControls.js': 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js'
+        ]
+        libs.each { name, url ->
+            def f = new File(assetsDir, name)
+            if (!f.exists() || f.length() == 0) {
+                println "Telechargement de ${name}..."
+                new URL(url).withInputStream { i -> f.withOutputStream { it << i } }
+            }
+        }
+    }
+}
+preBuild.dependsOn 'telechargerThreeJs'

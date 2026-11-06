@@ -1,0 +1,15 @@
+ELECTRONIQUE NUMERIQUE 3D (TP1, TP2, TP3) - Pr. Hicham MESBAH
+Application Android hors ligne (projet Android Studio)
+
+1. Decompresser ce dossier (par ex. dans Documents).
+2. Android Studio : File > Open > choisir le dossier "CircuitsSequentiels".
+   Attendre la fin de la synchronisation Gradle (barre en bas, Internet requis la 1re fois).
+3. Menu Build > Build App Bundle(s) / APK(s) > Build APK(s).
+   Au premier build, la bibliotheque 3D (three.js) est telechargee automatiquement
+   dans app/src/main/assets.
+4. Cliquer "locate" dans la notification : le fichier est
+   app/build/outputs/apk/debug/app-debug.apk
+5. Copier app-debug.apk sur la tablette, l'ouvrir, autoriser
+   "Installer des applications inconnues", puis Installer.
+
+L'application fonctionne ensuite SANS Internet.
